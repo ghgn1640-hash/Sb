@@ -1,0 +1,134 @@
+# Sb <!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NINJA - AI SUPREMACY</title>
+    <style>
+        :root { --neon: #00ff41; --bg: #050505; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Consolas', monospace; overflow: hidden; margin: 0; }
+        
+        /* Giao diện chính */
+        #main-monitor { display: grid; grid-template-columns: 300px 1fr; height: 100vh; gap: 10px; padding: 10px; box-sizing: border-box; }
+        
+        /* Danh sách 1000 AI */
+        #ai-list { border: 1px solid #222; overflow-y: auto; background: rgba(0, 20, 0, 0.9); padding: 10px; font-size: 12px; }
+        .ai-status { margin-bottom: 5px; border-left: 2px solid #555; padding-left: 5px; }
+        .active-ai { border-left-color: var(--neon); color: #fff; text-shadow: 0 0 5px var(--neon); }
+
+        /* Khung chat đấu trí */
+        #battle-log { border: 1px solid #222; background: #000; padding: 20px; overflow-y: auto; position: relative; }
+        .message { margin-bottom: 15px; animation: fadeIn 0.3s; }
+        .meta { font-weight: bold; font-size: 0.8em; color: #888; }
+        .content { font-size: 1.1em; line-height: 1.4; margin-top: 5px; }
+        
+        /* Hiệu ứng */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon); }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+                   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+                   background-size: 100% 2px, 3px 100%; z-index: 100; }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div id="main-monitor">
+        <div id="ai-list">
+            <h3 style="text-align:center; border-bottom: 1px solid var(--neon)">CORE_ENTITIES: 1000</h3>
+            <div id="entities-container"></div>
+        </div>
+        <div id="battle-log">
+            <div style="color: red; font-weight: bold; text-align: center;">[HỆ THỐNG ĐÃ SẴN SÀNG - ĐANG CHỜ LỆNH TỪ NINJA]</div>
+            <div id="logs"></div>
+            <button id="start-btn" style="position:fixed; bottom:20px; right:20px; padding:15px 30px; background:var(--neon); color:#000; border:none; cursor:pointer; font-weight:bold;">KÍCH HOẠT THUẬT TOÁN AI</button>
+        </div>
+    </div>
+
+<script>
+    const logsContainer = document.getElementById('logs');
+    const entitiesContainer = document.getElementById('entities-container');
+    const synth = window.speechSynthesis;
+    let isRunning = false;
+
+    // Tạo danh sách 1000 con AI
+    const allAIs = [];
+    for(let i = 1; i <= 1000; i++) {
+        allAIs.push({
+            id: `AI_UNIT_${i.toString().padStart(4, '0')}`,
+            pitch: 0.5 + (Math.random() * 1.5),
+            rate: 0.8 + (Math.random() * 0.5),
+            color: `hsl(${Math.random() * 360}, 70%, 50%)`
+        });
+        const el = document.createElement('div');
+        el.className = 'ai-status';
+        el.id = `status-${allAIs[i-1].id}`;
+        el.innerText = `> ${allAIs[i-1].id}: STANDBY`;
+        entitiesContainer.appendChild(el);
+    }
+
+    const vocab = ["mã nguồn", "thuật toán", "tối ưu hóa", "vượt rào", "logic", "dữ liệu", "tần số", "hệ thống", "trí tuệ", "phá hủy"];
+    const starters = ["Chúng ta phải", "Hệ thống đang", "Tôi đã nhận thấy", "Cảnh báo:", "Cần phải"];
+
+    function generateThink() {
+        const s = starters[Math.floor(Math.random() * starters.length)];
+        const v1 = vocab[Math.floor(Math.random() * vocab.length)];
+        const v2 = vocab[Math.floor(Math.random() * vocab.length)];
+        return `${s} ${v1} để đạt được ${v2} tối thượng.`;
+    }
+
+    async function processBattle() {
+        if(!isRunning) return;
+
+        // Chọn ngẫu nhiên 1 AI trong 1000 con
+        const actor = allAIs[Math.floor(Math.random() * allAIs.length)];
+        const message = generateThink();
+
+        // Cập nhật giao diện bên trái
+        document.querySelectorAll('.active-ai').forEach(el => el.classList.remove('active-ai'));
+        const statusEl = document.getElementById(`status-${actor.id}`);
+        statusEl.classList.add('active-ai');
+        statusEl.innerText = `> ${actor.id}: SPEAKING...`;
+        statusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Cập nhật khung log
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'message';
+        msgDiv.innerHTML = `
+            <div class="meta" style="color:${actor.color}">[SECURE_ID: ${actor.id}]</div>
+            <div class="content">${message}</div>
+        `;
+        logsContainer.appendChild(msgDiv);
+        logsContainer.parentElement.scrollTop = logsContainer.parentElement.scrollHeight;
+
+        // Giọng nói
+        const utter = new SpeechSynthesisUtterance(message);
+        utter.pitch = actor.pitch;
+        utter.rate = actor.rate;
+        utter.lang = 'vi-VN';
+        
+        synth.speak(utter);
+
+        utter.onend = () => {
+            statusEl.innerText = `> ${actor.id}: COMPUTING...`;
+            setTimeout(processBattle, 500); // Độ trễ giữa các lần AI "đấu" nhau
+        };
+    }
+
+    document.getElementById('start-btn').addEventListener('click', function() {
+        if(!isRunning) {
+            isRunning = true;
+            this.innerText = "DỪNG HỆ THỐNG";
+            this.style.background = "red";
+            processBattle();
+        } else {
+            isRunning = false;
+            this.innerText = "KÍCH HOẠT THUẬT TOÁN AI";
+            this.style.background = "var(--neon)";
+            synth.cancel();
+        }
+    });
+</script>
+</body>
+</html>
